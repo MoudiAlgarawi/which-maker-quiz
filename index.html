@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Which Maker Are You?</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%;width:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+body{
+  background:
+    radial-gradient(circle at top left,rgba(20,184,166,.22),transparent 32%),
+    radial-gradient(circle at bottom right,rgba(124,58,237,.20),transparent 34%),
+    linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+  color:#f1f5f9;
+}
+.app-wrapper{width:100%;min-height:100vh;display:flex;flex-direction:column}
+@keyframes fadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.75)}70%{transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
+.fade-in{animation:fadeIn .45s ease-out}
+.pop-in{animation:popIn .55s ease-out}
+.quiz-card{
+  background:rgba(15,23,42,.78);
+  border:1px solid rgba(148,163,184,.25);
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  backdrop-filter:blur(12px)
+}
+.btn-option{transition:.2s ease;position:relative;overflow:hidden}
+.btn-option:hover{transform:translateY(-2px);border-color:rgba(45,212,191,.75);background:rgba(51,65,85,.9)}
+.btn-option.selected{transform:scale(1.02);border-color:rgba(45,212,191,1);box-shadow:0 0 18px rgba(45,212,191,.25)}
+.progress-bar{height:6px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#14b8a6,#06b6d4);transition:width .35s ease;border-radius:999px}
+.logo-img{width:54px;height:54px;border-radius:14px;object-fit:cover;border:1px solid rgba(255,255,255,.18)}
+.hero-img{width:100%;border-radius:24px;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 45px rgba(0,0,0,.32)}
+.result-share-card{border-radius:30px;overflow:hidden;border:1px solid rgba(255,255,255,.22);box-shadow:0 22px 60px rgba(0,0,0,.40)}
+.character-image{
+  width:min(330px,86vw);
+  aspect-ratio:1/1;
+  margin:0 auto 22px;
+  border-radius:30px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.22);
+  box-shadow:0 22px 55px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.08)
+}
+.character-image img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18)}
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  background:rgba(15,23,42,.95);color:white;border:1px solid rgba(255,255,255,.18);
+  padding:12px 18px;border-radius:999px;display:none;z-index:50
+}
+</style>
+</head>
+
+<body>
+<div class="app-wrapper">
+<main class="flex-1 py-6 px-4">
+<div class="max-w-2xl mx-auto">
+
+<div id="startScreen" class="fade-in">
+  <div class="quiz-card rounded-3xl p-7 md:p-10 text-center">
+    <div class="flex items-center justify-center gap-3 mb-6">
+      <img src="assets/logo.jpg" alt="Manufacturing Community Logo" class="logo-img" />
+      <p class="text-teal-300 font-bold text-xs md:text-sm tracking-widest">MANUFACTURING COMMUNITY</p>
+    </div>
+    <h1 class="text-4xl md:text-5xl font-black mb-3" dir="ltr">Which Maker Are You?</h1>
+    <p class="text-slate-300 leading-8 text-base md:text-lg mb-7">
+      هذا الاختبار يساعدك تكتشف نمطك من خلال 8 أسئلة، بدون إجابات صحيحة أو خاطئة.
+      <br>
+      اختياراتك توضح أسلوبك في التقنية والتصنيع وتحدد الشخصية الأقرب لك.
+    </p>
+    <img src="assets/group.jpg" alt="Characters" class="hero-img mb-8" />
+    <button onclick="startQuiz()" class="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-[1.02]">
+      ابدأ
+    </button>
+  </div>
+</div>
+
+<div id="quizScreen" class="hidden">
+  <div class="mb-7">
+    <div class="flex justify-between items-center mb-3">
+      <span class="text-sm font-semibold text-teal-300">السؤال <span id="currentQuestion">1</span> من 8</span>
+      <span class="text-sm text-slate-400" id="progressPercent">12%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:12.5%"></div></div>
+  </div>
+  <div class="quiz-card rounded-3xl p-7 md:p-9 fade-in">
+    <h2 class="text-2xl md:text-3xl font-bold mb-8 text-center leading-relaxed" id="questionText"></h2>
+    <div class="space-y-3" id="optionsContainer"></div>
+  </div>
+</div>
+
+<div id="resultScreen" class="hidden">
+  <div class="result-share-card pop-in" id="resultCard"></div>
+  <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <button onclick="shareResult()" class="bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold py-3 px-6 rounded-2xl transition-all">
+      مشاركة النتيجة
+    </button>
+    <button onclick="restartQuiz()" class="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-3 px-6 rounded-2xl transition-all">
+      إعادة الاختبار
+    </button>
+  </div>
+  <p class="text-center text-slate-400 text-sm mt-4">صوّر الكرت واستلم قطعتك حسب شخصيتك.</p>
+</div>
+
+</div>
+</main>
+</div>
+<div id="toast" class="toast">تم نسخ النتيجة</div>
+
+<script>
+const questions=[
+{text:"لما تبدأ مشروع، أول شيء يجي في بالك؟",options:[
+{text:"أفتح برنامج وأبدأ أرتب الواجهة أو الكود",character:"Cody"},
+{text:"أفكر كيف الطاقة/الإشارات تمشي داخل النظام",character:"Pluggo"},
+{text:"أتخيل كيف القطع تتحرك مع بعض",character:"Gero"},
+{text:"أفكر كيف أبني نموذج أو شكل فعلي",character:"Cubo"}]},
+{text:"أكثر شيء يشدك في المشاريع؟",options:[
+{text:"الكود والتصميم الرقمي",character:"Cody"},
+{text:"التوصيلات والتشغيل",character:"Pluggo"},
+{text:"الحركة والتروس",character:"Gero"},
+{text:"الشكل والبناء",character:"Cubo"}]},
+{text:"لو شيء ما اشتغل، أول شيء تسويه؟",options:[
+{text:"أراجع الكود أو التصميم",character:"Cody"},
+{text:"أشيك على التوصيلات أو النظام",character:"Pluggo"},
+{text:"أفك القطعة وأشوف الحركة",character:"Gero"},
+{text:"أعدل في النموذج وأجرب",character:"Cubo"}]},
+{text:"أي بيئة تفضل؟",options:[
+{text:"لابتوب + برامج",character:"Cody"},
+{text:"أسلاك + أجهزة",character:"Pluggo"},
+{text:"أدوات + قطع ميكانيكية",character:"Gero"},
+{text:"طابعة 3D + نماذج",character:"Cubo"}]},
+{text:"لو عندك فكرة، كيف تبدأ؟",options:[
+{text:"أحولها لواجهة أو كود",character:"Cody"},
+{text:"أربطها بنظام أو دائرة",character:"Pluggo"},
+{text:"أشتغل على الحركة والتركيب",character:"Gero"},
+{text:"أبني نموذج وأجرب",character:"Cubo"}]},
+{text:"وش أكثر شيء تستمتع فيه؟",options:[
+{text:"كتابة الكود أو تصميم UI",character:"Cody"},
+{text:"تشغيل الأجهزة وربطها",character:"Pluggo"},
+{text:"تركيب القطع وتحريكها",character:"Gero"},
+{text:"تشكيل وبناء نموذج",character:"Cubo"}]},
+{text:"أي وصف أقرب لك؟",options:[
+{text:"أحب التقنية والبرمجة",character:"Cody"},
+{text:"أحب الأنظمة والأجهزة",character:"Pluggo"},
+{text:"أحب الميكانيكا والحركة",character:"Gero"},
+{text:"أحب النمذجة والبناء",character:"Cubo"}]},
+{text:"لو تختار مسار:",options:[
+{text:"Software / UI",character:"Cody"},
+{text:"Electronics / Systems",character:"Pluggo"},
+{text:"Mechanical",character:"Gero"},
+{text:"Prototyping / Modeling",character:"Cubo"}]}
+];
+
+const characters={
+Cody:{name:"Cody",image:"assets/cody.jpg",tagline:"I think in code.",description:"تميل للتصميم الرقمي وترتيب الأفكار وتحويلها لشكل واضح.",color:"from-teal-500 via-cyan-700 to-slate-950",accent:"text-teal-100",traits:["Software","UI","Digital Design"]},
+Pluggo:{name:"Pluggo",image:"assets/pluggo.jpg",tagline:"I power things up.",description:"تحب تفهم كيف الأشياء تشتغل وتربط التقنية بالتطبيق.",color:"from-purple-600 via-violet-800 to-slate-950",accent:"text-purple-100",traits:["Electronics","Systems","Power"]},
+Gero:{name:"Gero",image:"assets/gero.jpg",tagline:"I make things move.",description:"تميل للحركة والتركيب وفهم الأجزاء الميكانيكية.",color:"from-blue-600 via-blue-900 to-slate-950",accent:"text-blue-100",traits:["Mechanical","Motion","Assembly"]},
+Cubo:{name:"Cubo",image:"assets/cubo.jpg",tagline:"I build it from scratch.",description:"تحب البناء والتجريب وتحويل الأفكار إلى نموذج ملموس.",color:"from-slate-200 via-slate-500 to-slate-950",accent:"text-white",traits:["Modeling","Prototype","Build"]}
+};
+
+let currentQuestion=0;
+let answers=[];
+let lastResultName="";
+
+function startQuiz(){
+currentQuestion=0;
+answers=[];
+document.getElementById("startScreen").classList.add("hidden");
+document.getElementById("resultScreen").classList.add("hidden");
+document.getElementById("quizScreen").classList.remove("hidden");
+displayQuestion();
+}
+
+function displayQuestion(){
+const question=questions[currentQuestion];
+document.getElementById("questionText").textContent=question.text;
+document.getElementById("currentQuestion").textContent=currentQuestion+1;
+const progress=((currentQuestion+1)/questions.length)*100;
+document.getElementById("progressFill").style.width=progress+"%";
+document.getElementById("progressPercent").textContent=Math.round(progress)+"%";
+const optionsContainer=document.getElementById("optionsContainer");
+optionsContainer.innerHTML="";
+question.options.forEach((option)=>{
+const button=document.createElement("button");
+button.className="btn-option w-full text-right bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-white p-4 rounded-2xl font-semibold leading-relaxed";
+button.textContent=option.text;
+button.onclick=()=>selectAnswer(option.character,button);
+optionsContainer.appendChild(button);
+});
+}
+
+function selectAnswer(character,button){
+answers.push(character);
+button.classList.add("selected");
+setTimeout(()=>{
+if(currentQuestion<questions.length-1){
+currentQuestion++;
+displayQuestion();
+}else{
+showResult();
+}
+},250);
+}
+
+function showResult(){
+const counts={Cody:0,Pluggo:0,Gero:0,Cubo:0};
+answers.forEach(char=>counts[char]++);
+const order=["Cody","Pluggo","Gero","Cubo"];
+let resultKey=order[0];
+order.forEach(char=>{
+if(counts[char]>counts[resultKey]) resultKey=char;
+});
+const character=characters[resultKey];
+lastResultName=character.name;
+document.getElementById("quizScreen").classList.add("hidden");
+document.getElementById("resultScreen").classList.remove("hidden");
+const resultCard=document.getElementById("resultCard");
+resultCard.className=`result-share-card pop-in bg-gradient-to-br ${character.color}`;
+resultCard.innerHTML=`
+<div class="p-7 md:p-10 text-center">
+<div class="flex items-center justify-center gap-3 mb-5">
+<img src="assets/logo.jpg" alt="Manufacturing Community Logo" class="logo-img" />
+<p class="text-xs font-bold tracking-widest text-white/80">MANUFACTURING COMMUNITY</p>
+</div>
+<p class="text-sm font-bold tracking-widest text-white/80 mb-3">YOUR MAKER TYPE</p>
+<div class="character-image"><img src="${character.image}" alt="${character.name}"></div>
+<h2 class="text-5xl md:text-6xl font-black mb-3" dir="ltr">${character.name}</h2>
+<p class="text-xl md:text-2xl ${character.accent} mb-5 font-bold" dir="ltr">${character.tagline}</p>
+<p class="text-lg leading-relaxed mb-6 text-white/90">${character.description}</p>
+<div class="flex flex-wrap justify-center gap-3 mb-6">
+${character.traits.map(trait=>`<span class="badge px-4 py-2 rounded-full text-sm font-semibold" dir="ltr">${trait}</span>`).join("")}
+</div>
+<p class="text-white/65 text-sm" dir="ltr">#WhichMakerAreYou</p>
+</div>`;
+}
+
+async function shareResult(){
+const text=`My Maker Type is ${lastResultName} — Which Maker Are You?`;
+if(navigator.share){
+try{await navigator.share({title:"Which Maker Are You?",text});return;}catch(e){}
+}
+try{
+await navigator.clipboard.writeText(text);
+showToast("تم نسخ النتيجة");
+}catch(e){
+showToast("صوّر النتيجة وشاركها");
+}
+}
+
+function showToast(message){
+const toast=document.getElementById("toast");
+toast.textContent=message;
+toast.style.display="block";
+setTimeout(()=>{toast.style.display="none";},1800);
+}
+
+function restartQuiz(){
+document.getElementById("resultScreen").classList.add("hidden");
+document.getElementById("startScreen").classList.remove("hidden");
+currentQuestion=0;
+answers=[];
+lastResultName="";
+}
+</script>
+</body>
+</html>
